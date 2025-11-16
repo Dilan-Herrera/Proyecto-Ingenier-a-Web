@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>Historial de consultas del core</h2>
+  </div>
+
+  <p class="text-muted">
+    Aquí se mostrarán las consultas que realicen los usuarios cuando implementes el flujo de recomendación.
+  </p>
+
+  {% if consultas %}
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Perfil de uso</th>
+          <th>Modelo recomendado</th>
+          <th>Notas</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in consultas %}
+          <tr>
+            <td>{{ c.fecha if c.fecha is defined else 'N/A' }}</td>
+            <td>{{ c.perfil_nombre }}</td>
+            <td>{{ c.modelo_nombre }}</td>
+            <td>{{ c.notas if c.notas is defined else '' }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p>No hay consultas registradas todavía.</p>
+  {% endif %}
+{% endblock %}
