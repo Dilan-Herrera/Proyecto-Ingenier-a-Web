@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h2 class="mb-3">Calibración del core (pesos del IEG)</h2>
+
+  <form method="GET" class="mb-4">
+    <div class="row g-2 align-items-end">
+      <div class="col-md-6">
+        <label class="form-label">Selecciona un perfil de uso</label>
+        <select name="perfil_id" class="form-select" onchange="this.form.submit()">
+          <option value="">-- Selecciona --</option>
+          {% for p in perfiles %}
+            <option value="{{ p._id }}"
+                    {% if perfil_id_seleccionado and perfil_id_seleccionado == p._id|string %}selected{% endif %}>
+              {{ p.nombre }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-3">
+        <button type="submit" class="btn btn-primary">Cargar perfil</button>
+      </div>
+    </div>
+  </form>
+
+  {% if perfil_seleccionado %}
+    <h4 class="mb-3">Pesos del perfil: {{ perfil_seleccionado.nombre }}</h4>
+
+    <form method="POST" class="mb-4">
+      <input type="hidden" name="perfil_id" value="{{ perfil_id_seleccionado }}">
+      <div class="row">
+        <div class="mb-3 col-md-3">
+          <label class="form-label">Peso rendimiento</label>
+          <input type="number" step="0.01" name="peso_rendimiento" class="form-control"
+                 value="{{ pesos_form.peso_rendimiento }}">
+          {% if errores.peso_rendimiento %}<div class="text-danger">{{ errores.peso_rendimiento }}</div>{% endif %}
+        </div>
+        <div class="mb-3 col-md-3">
+          <label class="form-label">Peso precio</label>
+          <input type="number" step="0.01" name="peso_precio" class="form-control"
+                 value="{{ pesos_form.peso_precio }}">
+          {% if errores.peso_precio %}<div class="text-danger">{{ errores.peso_precio }}</div>{% endif %}
+        </div>
+        <div class="mb-3 col-md-3">
+          <label class="form-label">Peso consumo</label>
+          <input type="number" step="0.01" name="peso_consumo" class="form-control"
+                 value="{{ pesos_form.peso_consumo }}">
+          {% if errores.peso_consumo %}<div class="text-danger">{{ errores.peso_consumo }}</div>{% endif %}
+        </div>
+        <div class="mb-3 col-md-3">
+          <label class="form-label">Peso temperatura</label>
+          <input type="number" step="0.01" name="peso_temperatura" class="form-control"
+                 value="{{ pesos_form.peso_temperatura }}">
+          {% if errores.peso_temperatura %}<div class="text-danger">{{ errores.peso_temperatura }}</div>{% endif %}
+        </div>
+      </div>
+
+      <button type="submit" name="action" value="simular" class="btn btn-outline-primary me-2">
+        Simular sin guardar
+      </button>
+      <button type="submit" name="action" value="guardar" class="btn btn-primary">
+        Guardar nuevos pesos
+      </button>
+    </form>
+
+    {% if resultados %}
+      <h5>Impacto en el ranking con los nuevos pesos</h5>
+      <p class="text-muted">
+        Se muestra el IEG actual (con los pesos guardados) versus el IEG con los pesos propuestos.
+      </p>
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th>Modelo</th>
+            <th>IEG actual</th>
+            <th>IEG nuevo</th>
+            <th>Diferencia</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in resultados %}
+            <tr>
+              <td>{{ r.modelo.nombre }}</td>
+              <td>{{ "%.2f"|format(r.ieg_actual) }}</td>
+              <td>{{ "%.2f"|format(r.ieg_nuevo) }}</td>
+              <td>{{ "%.2f"|format(r.diferencia) }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% endif %}
+  {% else %}
+    <p class="text-muted">Selecciona un perfil de uso para comenzar la calibración</p>
+  {% endif %}
+{% endblock %}
