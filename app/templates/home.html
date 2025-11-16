@@ -61,4 +61,36 @@
         <canvas id="modelosPorPerfil" height="120"></canvas>
       </div>
     </div>
+
+    <!-- Chart.js solo si hay datos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+      const ctx = document.getElementById('modelosPorPerfil').getContext('2d');
+
+      const chartData = {
+        labels: {{ chart_labels | tojson | safe }},
+        datasets: [{
+          label: 'Modelos por perfil',
+          data: {{ chart_values | tojson | safe }},
+          borderWidth: 1
+        }]
+      };
+
+      new Chart(ctx, {
+        type: 'bar',
+        data: chartData,
+        options: {
+          responsive: true,
+          scales: {
+            y: {
+              beginAtZero: true,
+            }
+          }
+        }
+      });
+    </script>
+  {% else %}
+    <p class="text-muted">Aún no hay modelos suficientes para mostrar la gráfica.</p>
+  {% endif %}
+
 {% endblock %}
