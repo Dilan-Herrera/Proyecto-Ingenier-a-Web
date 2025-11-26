@@ -1,25 +1,27 @@
 from flask import Flask
 from flask_pymongo import PyMongo
 import os
+from dotenv import load_dotenv 
+
+load_dotenv()
 
 mongo = PyMongo()
-
 
 def create_app():
     app = Flask(__name__)
 
-    mongo_uri = os.environ.get("MONGO_URI")
-
-    if not mongo_uri:
-        mongo_uri = "mongodb://localhost:27017/techadvisor_db"
-
-    app.config["MONGO_URI"] = mongo_uri
-
-    app.secret_key = os.environ.get("SECRET_KEY", "clave_dev_super_insegura")
+    app.config["MONGO_URI"] = os.getenv("MONGO_URI")
+    app.secret_key = os.getenv("SECRET_KEY")
 
     mongo.init_app(app)
 
     from .routes import admin_bp
-    app.register_blueprint(admin_bp)
+    app.register_blueprint(admin_bp, url_prefix="/admin")
+
+    try:
+        from .public_routes import public_bp
+        app.register_blueprint(public_bp)
+    except ImportError:
+        print("Advertencia: Aún no has creado el archivo public_routes.py, la parte de usuario no cargará.")
 
     return app

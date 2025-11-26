@@ -89,3 +89,11 @@ def get_all_consultas():
 
 def create_consulta(data):
     return mongo.db.consultas.insert_one(data)
+
+def get_user_by_email(email):
+    """Busca un usuario normal en la BD por su correo"""
+    return mongo.db.usuarios.find_one({"email": email})
+
+def create_user(data):
+    """Guarda un nuevo usuario en la colección 'usuarios'"""
+    return mongo.db.usuarios.insert_one(data)

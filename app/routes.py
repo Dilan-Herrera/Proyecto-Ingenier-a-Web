@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 import json 
 from .models import (
     get_all_perfiles, get_perfil_by_id, create_perfil, update_perfil, delete_perfil,
@@ -9,27 +9,43 @@ from .models import (
 
 admin_bp = Blueprint("admin", __name__)
 
-def calcular_ieg(modelo, pesos):
+@admin_bp.before_request
+def restringir_acceso_admin():
     """
-    Cálculo sencillo de IEG:
-    - rendimiento suma
-    - precio, consumo y temperatura restan (costos)
-    Esto es solo para simulación en el módulo de calibración.
+    Este bloque se ejecuta antes de CUALQUIER ruta definida abajo.
+    Si el usuario no es admin, lo patea al login.
     """
-    rend = float(modelo.get("rendimiento") or 0)
-    precio = float(modelo.get("precio") or 0)
-    consumo = float(modelo.get("consumo") or 0)
-    temp = float(modelo.get("temperatura") or 0)
+    if session.get("user_role") != "admin":
+        flash("Acceso denegado. Debes iniciar sesión como Administrador.", "danger")
+        return redirect(url_for("public.login"))
 
-    pr = float(pesos.get("peso_rendimiento") or 0)
-    pp = float(pesos.get("peso_precio") or 0)
-    pc = float(pesos.get("peso_consumo") or 0)
-    pt = float(pesos.get("peso_temperatura") or 0)
+def calcular_ieg_avanzado(modelo, pesos, maximos, minimos):
+    """
+    Aplica la fórmula REAL con Normalización (0 a 1).
+    IEG = (a * Rn) + (b * (1-Pn)) + (c * (1-Cn)) + (d * (1-Tn))
+    """
+    r_crudo = float(modelo.get("rendimiento") or 0)
+    p_crudo = float(modelo.get("precio") or 0)
+    c_crudo = float(modelo.get("consumo") or 0)
+    t_crudo = float(modelo.get("temperatura") or 0)
 
-    return rend * pr - precio * pp - consumo * pc - temp * pt
+    def normalizar(val, min_v, max_v):
+        if max_v == min_v: return 0 
+        return (val - min_v) / (max_v - min_v)
 
+    Rn = normalizar(r_crudo, minimos['rend'], maximos['rend'])
+    Pn = normalizar(p_crudo, minimos['prec'], maximos['prec'])
+    Cn = normalizar(c_crudo, minimos['cons'], maximos['cons'])
+    Tn = normalizar(t_crudo, minimos['temp'], maximos['temp'])
 
-# HOME
+    alpha = float(pesos.get("peso_rendimiento") or 0)
+    beta = float(pesos.get("peso_precio") or 0)
+    gamma = float(pesos.get("peso_consumo") or 0)
+    delta = float(pesos.get("peso_temperatura") or 0)
+
+    score = (alpha * Rn) + (beta * (1 - Pn)) + (gamma * (1 - Cn)) + (delta * (1 - Tn))
+    
+    return score
 
 @admin_bp.route("/")
 def home():
@@ -43,7 +59,6 @@ def home():
     total_modelos = len(modelos)
     total_consultas = len(consultas)
 
-    # Modelo con mejor relación rendimiento/precio
     mejor_relacion = None
     mejor_ratio = None
     for m in modelos:
@@ -58,7 +73,6 @@ def home():
         except (TypeError, ValueError):
             continue
 
-    # Conteo de modelos por perfil de uso 
     modelos_por_perfil = {}
     perfiles_dict = {str(p["_id"]): p for p in perfiles}
 
@@ -85,7 +99,6 @@ def home():
         chart_labels=chart_labels,
         chart_values=chart_values,
     )
-
 
 
 @admin_bp.route("/consultas")
@@ -119,7 +132,6 @@ def nuevo_perfil():
         nombre = request.form.get("nombre", "").strip()
         descripcion = request.form.get("descripcion", "").strip()
 
-        # Pesos para el core
         peso_rendimiento = request.form.get("peso_rendimiento")
         peso_precio = request.form.get("peso_precio")
         peso_consumo = request.form.get("peso_consumo")
@@ -143,7 +155,6 @@ def nuevo_perfil():
         peso_consumo_val = validar_peso("peso_consumo", peso_consumo)
         peso_temperatura_val = validar_peso("peso_temperatura", peso_temperatura)
 
-        # Si no hay errores, grabar
         if not errors:
             data = {
                 "nombre": nombre,
@@ -320,7 +331,6 @@ def nuevo_modelo():
         consumo = request.form.get("consumo")
         temperatura = request.form.get("temperatura")
 
-        # VALIDACIONES BACK-END (dato sensible) 
         if not nombre:
             errors["nombre"] = "El nombre del modelo es obligatorio."
 
@@ -331,7 +341,6 @@ def nuevo_modelo():
             if existente:
                 errors["codigo_modelo"] = "Ya existe un modelo con ese código."
 
-        # Precio = dato sensible para el core
         try:
             precio_val = float(precio)
             if precio_val <= 0 or precio_val > 10000:
@@ -475,7 +484,6 @@ def calibracion_core():
     pesos_form = {}
     resultados = []
 
-    # Valores por defecto para el formulario de pesos
     if perfil:
         pesos_form = {
             "peso_rendimiento": perfil.get("peso_rendimiento", 0),
@@ -509,23 +517,48 @@ def calibracion_core():
             }
             pesos_form = pesos_nuevos
 
-            modelos = [m for m in get_all_modelos() if str(m.get("perfil_uso_id")) == str(perfil_id)]
+            todos_modelos = get_all_modelos()
+            
+            if not todos_modelos:
+                flash("Necesitas agregar modelos al sistema para calibrar.", "warning")
+            else:
+                try:
+                    maximos = {
+                        'rend': max(float(m.get('rendimiento',0)) for m in todos_modelos),
+                        'prec': max(float(m.get('precio',0)) for m in todos_modelos),
+                        'cons': max(float(m.get('consumo',0)) for m in todos_modelos),
+                        'temp': max(float(m.get('temperatura',0)) for m in todos_modelos)
+                    }
+                    minimos = {
+                        'rend': min(float(m.get('rendimiento',0)) for m in todos_modelos),
+                        'prec': min(float(m.get('precio',0)) for m in todos_modelos),
+                        'cons': min(float(m.get('consumo',0)) for m in todos_modelos),
+                        'temp': min(float(m.get('temperatura',0)) for m in todos_modelos)
+                    }
+                except ValueError:
+                    maximos = minimos = {'rend':0, 'prec':0, 'cons':0, 'temp':0}
 
-            for m in modelos:
-                pesos_actuales = {
-                    "peso_rendimiento": perfil.get("peso_rendimiento", 0),
-                    "peso_precio": perfil.get("peso_precio", 0),
-                    "peso_consumo": perfil.get("peso_consumo", 0),
-                    "peso_temperatura": perfil.get("peso_temperatura", 0),
-                }
-                ie_actual = calcular_ieg(m, pesos_actuales)
-                ie_nuevo = calcular_ieg(m, pesos_nuevos)
-                resultados.append({
-                    "modelo": m,
-                    "ieg_actual": ie_actual,
-                    "ieg_nuevo": ie_nuevo,
-                    "diferencia": ie_nuevo - ie_actual,
-                })
+                modelos_del_perfil = [m for m in todos_modelos if str(m.get("perfil_uso_id")) == str(perfil_id)]
+
+                for m in modelos_del_perfil:
+                    pesos_actuales = {
+                        "peso_rendimiento": perfil.get("peso_rendimiento", 0),
+                        "peso_precio": perfil.get("peso_precio", 0),
+                        "peso_consumo": perfil.get("peso_consumo", 0),
+                        "peso_temperatura": perfil.get("peso_temperatura", 0),
+                    }
+                    
+                    ie_actual = calcular_ieg_avanzado(m, pesos_actuales, maximos, minimos)
+                    ie_nuevo = calcular_ieg_avanzado(m, pesos_nuevos, maximos, minimos)
+                    
+                    resultados.append({
+                        "modelo": m,
+                        "ieg_actual": round(ie_actual, 4),
+                        "ieg_nuevo": round(ie_nuevo, 4),
+                        "diferencia": round(ie_nuevo - ie_actual, 4),
+                    })
+                    
+                resultados.sort(key=lambda x: x['ieg_nuevo'], reverse=True)
 
             if accion == "guardar":
                 data_update = {
