@@ -1,7 +1,10 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash
 import os
 from werkzeug.security import generate_password_hash, check_password_hash
-from .models import create_user, get_user_by_email
+from .models import (
+    create_user, get_user_by_email, 
+    get_all_modelos, get_all_marcas, buscar_modelos_por_nombre
+)
 
 public_bp = Blueprint("public", __name__)
 
@@ -38,7 +41,7 @@ def registro():
             "nombre": nombre,
             "email": email,
             "password": hashed_password,
-            "role": "usuario" 
+            "role": "usuario"
         }
         create_user(new_user)
 
@@ -47,11 +50,10 @@ def registro():
 
     return render_template("registro.html")
 
-
 @public_bp.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        usuario_input = request.form.get("username") 
+        usuario_input = request.form.get("username")
         password_input = request.form.get("password")
 
         if usuario_input == ADMIN_USER and password_input == ADMIN_PASS:
@@ -72,13 +74,11 @@ def login():
 
     return render_template("login.html")
 
-
 @public_bp.route("/logout")
 def logout():
     session.clear()
     flash("Has cerrado sesión.", "info")
     return redirect(url_for("public.login"))
-
 
 @public_bp.route("/inicio")
 def home_usuario():
@@ -88,4 +88,20 @@ def home_usuario():
     if session["user_role"] == "admin":
         return redirect(url_for("admin.home"))
 
-    return render_template("usuario_home.html", nombre=session.get("user_name"))
+    query = request.args.get("q")
+    
+    if query:
+        modelos = buscar_modelos_por_nombre(query)
+    else:
+        modelos = get_all_modelos()
+
+    marcas = {str(m["_id"]): m["nombre"] for m in get_all_marcas()}
+    
+    for m in modelos:
+        m_id_marca = str(m.get("marca_id"))
+        m["nombre_marca"] = marcas.get(m_id_marca, "Desconocida")
+
+    return render_template("usuario_home.html", 
+                           modelos=modelos, 
+                           usuario=session.get("user_name"),
+                           busqueda=query)

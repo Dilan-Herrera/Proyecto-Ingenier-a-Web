@@ -83,7 +83,6 @@ def delete_modelo(modelo_id):
 # CONSULTAS DEL CORE
 
 def get_all_consultas():
-    #  Implementacion futura del core del usuario
     return list(mongo.db.consultas.find())
 
 
@@ -97,3 +96,8 @@ def get_user_by_email(email):
 def create_user(data):
     """Guarda un nuevo usuario en la colección 'usuarios'"""
     return mongo.db.usuarios.insert_one(data)
+
+def buscar_modelos_por_nombre(texto):
+    """Busca modelos cuyo nombre contenga el texto (insensible a mayúsculas)"""
+    query = {"nombre": {"$regex": texto, "$options": "i"}} 
+    return list(mongo.db.modelos.find(query))
