@@ -1,4 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
+from flask import jsonify
 import json 
 from .models import (
     get_all_perfiles, get_perfil_by_id, create_perfil, update_perfil, delete_perfil,
