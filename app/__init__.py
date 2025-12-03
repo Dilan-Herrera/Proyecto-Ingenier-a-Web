@@ -18,10 +18,7 @@ def create_app():
     from .routes import admin_bp
     app.register_blueprint(admin_bp, url_prefix="/admin")
 
-    try:
-        from .public_routes import public_bp
-        app.register_blueprint(public_bp)
-    except ImportError:
-        print("Advertencia: Aún no has creado el archivo public_routes.py, la parte de usuario no cargará.")
+    from .public_routes import public_bp
+    app.register_blueprint(public_bp)
 
     return app
