@@ -9,8 +9,8 @@ from .models import (
 
 public_bp = Blueprint("public", __name__)
 
-ADMIN_USER = os.getenv("ADMIN_USER", "admin")
-ADMIN_PASS = os.getenv("ADMIN_PASS", "admin123")
+ADMIN_USER = os.getenv("ADMIN_USER")
+ADMIN_PASS = os.getenv("ADMIN_PASS")
 
 #  1. CORE MATEMÁTICO
 
