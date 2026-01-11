@@ -1,4 +1,4 @@
-# 🚀 TechAdvisor – Sistema de Recomendación de Hardware
+# TechAdvisor – Sistema de Recomendación de Hardware
 
 **Universidad de las Américas**  
 **Ingeniería Web**
@@ -7,11 +7,11 @@
 
 ---
 
-## 🏗️ 1. Arquitectura e Ingeniería de Software
+## 1. Arquitectura e Ingeniería de Software
 
 Este proyecto destaca por la refactorización de su núcleo lógico ("Core"), pasando de una estructura monolítica a una arquitectura modular basada en **Principios SOLID** y **Patrones de Diseño**.
 
-### 🧩 Patrones de Diseño Aplicados (Gang of Four)
+### Patrones de Diseño Aplicados (Gang of Four)
 
 1.  **Facade Pattern (Fachada):**
     *   **Ubicación:** `app/services.py` -> `CoreService`
@@ -37,7 +37,7 @@ Este proyecto destaca por la refactorización de su núcleo lógico ("Core"), pa
 
 ---
 
-## 🧠 2. Core Matemático (IEG)
+## 2. Core Matemático (IEG)
 
 El sistema calcula el **Índice de Eficiencia Global (IEG)** para cada computadora.
 
@@ -51,14 +51,14 @@ Donde:
 
 ---
 
-## 💻 3. Módulos del Sistema
+## 3. Módulos del Sistema
 
-### 🅰️ Módulo Administrativo (Admin)
+### Módulo Administrativo (Admin)
 *   **Dashboard:** Estadísticas visuales y métricas clave.
 *   **CRUDs Completos:** Gestión de Marcas, Perfiles de Uso y Modelos.
 *   **Calibrador del Core:** Simulador en tiempo real para ajustar los pesos del algoritmo y probar resultados antes de salir a producción.
 
-### 👤 Módulo de Usuario (Cliente)
+### Módulo de Usuario (Cliente)
 *   **Buscador Híbrido:** Algoritmo capaz de buscar, fusionar y comparar simultáneamente colecciones de **PC de Escritorio** y **Laptops**.
 *   **Filtros Inteligentes:** Selección en cascada (Perfil -> Marca).
 *   **Podio de Resultados:** Visualización de los Top 3 modelos ganadores.
@@ -67,7 +67,7 @@ Donde:
 
 ---
 
-## 🛠️ 4. Stack Tecnológico
+## 4. Stack Tecnológico
 
 *   **Lenguaje:** Python 3.10+
 *   **Backend:** Flask (Blueprints)
