@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1 class="mb-4">Dashboard - TechAdvisor Admin</h1>
+
+  <div class="row mb-4">
+    <div class="col-md-3 mb-3">
+      <div class="card text-bg-primary h-100">
+        <div class="card-body">
+          <h5 class="card-title">Perfiles de uso</h5>
+          <p class="card-text fs-3">{{ total_perfiles }}</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-3 mb-3">
+      <div class="card text-bg-success h-100">
+        <div class="card-body">
+          <h5 class="card-title">Marcas</h5>
+          <p class="card-text fs-3">{{ total_marcas }}</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-3 mb-3">
+      <div class="card text-bg-info h-100">
+        <div class="card-body">
+          <h5 class="card-title">Modelos registrados</h5>
+          <p class="card-text fs-3">{{ total_modelos }}</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-3 mb-3">
+      <div class="card text-bg-secondary h-100">
+        <div class="card-body">
+          <h5 class="card-title">Consultas del core</h5>
+          <p class="card-text fs-3">{{ total_consultas }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% if mejor_relacion %}
+    <div class="card mb-4">
+      <div class="card-body">
+        <h5 class="card-title">Mejor relación rendimiento/precio</h5>
+        <p class="card-text">
+          <strong>{{ mejor_relacion.nombre }}</strong><br>
+          Rendimiento: {{ mejor_relacion.rendimiento }}<br>
+          Precio: {{ mejor_relacion.precio }} USD
+        </p>
+      </div>
+    </div>
+  {% endif %}
+
+  {% if chart_labels %}
+    <div class="card mb-4">
+      <div class="card-body">
+        <h5 class="card-title mb-3">Distribución de modelos por perfil de uso</h5>
+        <canvas id="modelosPorPerfil" height="120"></canvas>
+      </div>
+    </div>
+
+    <!-- Chart.js solo si hay datos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+      const ctx = document.getElementById('modelosPorPerfil').getContext('2d');
+
+      const chartData = {
+        labels: {{ chart_labels | tojson | safe }},
+        datasets: [{
+          label: 'Modelos por perfil',
+          data: {{ chart_values | tojson | safe }},
+          borderWidth: 1
+        }]
+      };
+
+      new Chart(ctx, {
+        type: 'bar',
+        data: chartData,
+        options: {
+          responsive: true,
+          scales: {
+            y: {
+              beginAtZero: true,
+            }
+          }
+        }
+      });
+    </script>
+  {% else %}
+    <p class="text-muted">Aún no hay modelos suficientes para mostrar la gráfica.</p>
+  {% endif %}
+
+{% endblock %}
