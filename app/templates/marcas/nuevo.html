@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h2>Nueva marca</h2>
+
+  <form method="POST" class="mt-3">
+    <div class="mb-3">
+      <label class="form-label">Nombre</label>
+      <input type="text" name="nombre" class="form-control">
+      {% if errors.nombre %}<div class="text-danger">{{ errors.nombre }}</div>{% endif %}
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">País de origen</label>
+      <input type="text" name="pais_origen" class="form-control">
+    </div>
+
+    <button class="btn btn-primary" type="submit">Guardar</button>
+    <a href="{{ url_for('admin.listar_marcas') }}" class="btn btn-secondary">Cancelar</a>
+  </form>
+{% endblock %}
