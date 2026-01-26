@@ -157,3 +157,9 @@ def get_tiendas():
         "Cuenca": [{"nombre": "TecnoAustro", "direccion": "Calle Larga"}]
     }
     return jsonify({"tiendas": tiendas_db.get(ciudad, [])})
+
+@public_bp.route("/api/get_perfiles", methods=["GET"])
+def get_perfiles_api():
+    perfiles = get_all_perfiles()
+    data = [{"id": str(p["_id"]), "nombre": p["nombre"]} for p in perfiles]
+    return jsonify({"perfiles": data})

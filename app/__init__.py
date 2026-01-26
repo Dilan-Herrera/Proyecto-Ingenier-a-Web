@@ -2,6 +2,7 @@ from flask import Flask
 from flask_pymongo import PyMongo
 import os
 from dotenv import load_dotenv 
+from flask_cors import CORS
 
 load_dotenv()
 
@@ -9,6 +10,7 @@ mongo = PyMongo()
 
 def create_app():
     app = Flask(__name__)
+    CORS(app)
 
     app.config["MONGO_URI"] = os.getenv("MONGO_URI")
     app.secret_key = os.getenv("SECRET_KEY")
