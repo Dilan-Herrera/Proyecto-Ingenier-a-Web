@@ -1,3 +1,4 @@
+import datetime
 from .strategies import StrategyFactory
 
 class CoreService:
@@ -65,3 +66,4 @@ class CoreService:
         texto_base = estrategia.generate_text(ganador, segundo)
         
         return f"Para el perfil {perfil_nombre}: {texto_base}"
+    

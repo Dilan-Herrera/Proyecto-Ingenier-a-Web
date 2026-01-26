@@ -163,3 +163,75 @@ def get_perfiles_api():
     perfiles = get_all_perfiles()
     data = [{"id": str(p["_id"]), "nombre": p["nombre"]} for p in perfiles]
     return jsonify({"perfiles": data})
+
+
+@public_bp.route("/api/reporte/perfil/<perfil_id>", methods=["GET"])
+def reporte_analitico_perfil(perfil_id):
+    perfil = get_perfil_by_id(perfil_id)
+    if not perfil:
+        return jsonify({"error": "Perfil no encontrado"}), 404
+
+    modelos = get_all_modelos()
+    marcas = {str(m["_id"]): m for m in get_all_marcas()}
+
+    # Pesos del perfil
+    pesos = {
+        "peso_rendimiento": float(perfil.get("peso_rendimiento", 0)),
+        "peso_precio": float(perfil.get("peso_precio", 0)),
+        "peso_consumo": float(perfil.get("peso_consumo", 0)),
+        "peso_temperatura": float(perfil.get("peso_temperatura", 0)),
+    }
+
+    modelos_filtrados = [
+        m for m in modelos if str(m.get("perfil_uso_id")) == str(perfil_id)
+    ]
+
+    if not modelos_filtrados:
+        return jsonify({"mensaje": "No hay modelos asociados a este perfil."})
+
+    # Normalización
+    def sf(v): return CoreService._safe_float(v)
+    maximos = {
+        'rend': max(sf(m.get('rendimiento')) for m in modelos_filtrados),
+        'prec': max(sf(m.get('precio')) for m in modelos_filtrados),
+        'cons': max(sf(m.get('consumo')) for m in modelos_filtrados),
+        'temp': max(sf(m.get('temperatura')) for m in modelos_filtrados)
+    }
+    minimos = {
+        'rend': min(sf(m.get('rendimiento')) for m in modelos_filtrados),
+        'prec': min(sf(m.get('precio')) for m in modelos_filtrados),
+        'cons': min(sf(m.get('consumo')) for m in modelos_filtrados),
+        'temp': min(sf(m.get('temperatura')) for m in modelos_filtrados)
+    }
+
+    ranking = []
+    for m in modelos_filtrados:
+        score = CoreService.calcular_score(m, pesos, maximos, minimos)
+        marca = marcas.get(str(m.get("marca_id")))
+        ranking.append({
+            "modelo": m["nombre"],
+            "marca": marca["nombre"] if marca else "N/A",
+            "precio": m["precio"],
+            "rendimiento": m["rendimiento"],
+            "score": round(score, 4)
+        })
+
+    ranking.sort(key=lambda x: x["score"], reverse=True)
+
+    response = {
+        "perfil": {
+            "id": str(perfil["_id"]),
+            "nombre": perfil["nombre"],
+            "descripcion": perfil.get("descripcion", ""),
+            "pesos": pesos
+        },
+        "analisis": {
+            "total_modelos": len(ranking),
+            "mejor_modelo": ranking[0],
+            "score_max": ranking[0]["score"],
+            "score_min": ranking[-1]["score"]
+        },
+        "ranking": ranking
+    }
+
+    return jsonify(response)

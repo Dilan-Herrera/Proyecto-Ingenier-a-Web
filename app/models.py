@@ -86,3 +86,9 @@ def get_all_consultas():
 def buscar_modelos_por_nombre(texto):
     query = {"nombre": {"$regex": texto, "$options": "i"}}
     return list(mongo.db.modelos_computadora.find(query))
+
+def obtener_perfil_por_id(perfil_id):
+    return mongo.db.perfiles_uso.find_one({"_id": ObjectId(perfil_id)})
+
+def obtener_modelos():
+    return list(mongo.db.modelos_computadora.find())
